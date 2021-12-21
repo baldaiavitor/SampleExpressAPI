@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test Page</title>
+    <style>
+        form,
+        select,
+        #btnSend {
+            font-size:12px;
+        }
+
+        textarea,
+        input {
+            font-size: 12px;
+        }
+
+        textarea{
+            width: 95%;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            let url = document.getElementById('URL');
+            httpRequest("GET", {}, "/endpoints", function (response) {
+                for (var i = 0; i < response.length; i++) {
+                    let option = document.createElement('option');
+                    option.text = response[i];
+                    option.value = response[i];
+                    url.appendChild(option);
+                }
+            });
+        });
+
+        function format(text) {
+            text = text.replace(/(\r\n|\n|\t|' '|'   '|\r)/gm, "");
+            text = text.replace(' ', '');
+            text = text.replace('   ', '');
+            return text;
+        }
+
+        function httpRequest(method, data, url, callback) {
+            if (method == "POST") {
+                fetch(url, {
+                        method: method,
+                        headers: new Headers({
+                            'content-type': 'application/json'
+                        }),
+                        body: JSON.stringify(data) //STRING!!!
+                    }).then(response => response.json())
+                    .then(data => {
+                        callback(data);
+                    })
+                    .catch((error) => {
+                        callback(error);
+                    });
+            } else {
+                var queryString = Object.keys(data).map(key => key + '=' + data[key]).join('&');
+                url = `${url}?${queryString}`;
+                fetch(url, {
+                        method: method
+                    }).then(response => response.json())
+                    .then(data => {
+                        callback(data);
+                    })
+                    .catch((error) => {
+                        callback(error);
+                    });
+            }
+
+        }
+
+        function send() {
+            let responseField = document.getElementById('response');
+            responseField.innerHTML = "";
+            let method = document.getElementById('method').value;
+            let reqBody = document.getElementById('requestBody').value;
+            reqBody = JSON.parse(reqBody);
+            let url = document.getElementById('URL').value;
+            httpRequest(method, reqBody, url, function (response) {
+                responseField.innerHTML = JSON.stringify(response);
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <h2>API Test Page</h2>
+    <form action="javascript:send();">
+        <span>request URL </span><select id="URL"></select>
+        <label for="method">request method </label>
+        <select id="method" name="method" required>
+            <option>GET</option>
+            <option>POST</option>
+        </select><br>
+        <span>request body data (JSON)</span><br>
+        <textarea rows="20"  id="requestBody">{"id":"1"}</textarea><br>
+        <input type="submit" id="btnSend" value="SEND" /><br>
+        <span>RESPONSE:</span><br>
+        <textarea rows="20"  id="response"></textarea><br>
+    </form>
+</body>
+
+</html>
